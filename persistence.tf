@@ -17,6 +17,6 @@ resource "docker_container" "redis" {
 
   ports {
     internal = 6379 
-    external = var.postgres_external_port[terraform.workspace]
+    external = var.redis_external_port[terraform.workspace]
   }
 }
