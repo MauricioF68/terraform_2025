@@ -6,6 +6,10 @@ resource "docker_container" "app1" {
     internal = 80
     external = var.nginx_app1_external_port[terraform.workspace]
   }
+   networks_advanced {
+    name = docker_network.app_network.name
+  }
+  
 }
 
 resource "docker_container" "app2" {
@@ -16,6 +20,12 @@ resource "docker_container" "app2" {
     internal = 80
     external = var.nginx_app2_external_port[terraform.workspace]
   }
+  networks_advanced {
+    name = docker_network.app_network.name
+  }
+  networks_advanced {
+    name = docker_network.persistence_network.name
+  }
 }
 
 resource "docker_container" "app3" {
@@ -25,5 +35,11 @@ resource "docker_container" "app3" {
   ports {
     internal = 80
     external = var.nginx_app3_external_port[terraform.workspace]
+  }
+  networks_advanced {
+    name = docker_network.app_network.name
+  }
+  networks_advanced {
+    name = docker_network.monitor_network.name
   }
 }
