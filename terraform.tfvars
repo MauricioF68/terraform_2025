@@ -16,12 +16,10 @@ nginx_app3_external_port = {
   prod = 82
 }
 postgres_external_port = {
-  dev  = 5432
-  qa   = 5433
+  dev  = 5433
+  qa   = 5432
   prod = 5432
 }
-
-postgres_password = "contrasena123456"
 
 redis_external_port = {
   dev  = 6379
@@ -30,7 +28,7 @@ redis_external_port = {
 }
 
 grafana_external_port = {
-  dev  = 3000
+  dev  = 3003
   qa   = 3001
   prod = 3000
 }
