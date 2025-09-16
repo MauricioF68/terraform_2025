@@ -4,6 +4,6 @@ resource "docker_container" "grafana" {
 
   ports {
     internal = 3000 
-    external = var.postgres_external_port[terraform.workspace]
+    external = var.grafana_external_port[terraform.workspace]
   }
 }
