@@ -1,7 +1,7 @@
 resource "docker_container" "postgres" {
   name  = "postgres-${terraform.workspace}"
   image = "postgres:13-trixie"
-  environment = [
+  env = [
     "POSTGRES_PASSWORD=${var.postgres_password}"
   ]
 
