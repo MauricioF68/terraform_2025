@@ -1,117 +1,193 @@
-<a href="https://docker.com">
-    <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/master/assets/docker-logo.png" alt="Docker logo" title="Docker" align="right" height="100" />
-</a>
-<a href="https://terraform.io">
-    <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/master/assets/terraform-logo.png" alt="Terraform logo" title="Terraform" align="right" height="100" />
-</a>
-<a href="https://kreuzwerker.de">
-    <img src="https://raw.githubusercontent.com/kreuzwerker/terraform-provider-docker/master/assets/xw-logo.png" alt="Kreuzwerker logo" title="Kreuzwerker" align="right" height="100" />
-</a>
+Laboratorio 04: Infraestructura Automatizada con Terraform y Ansible
+Integrantes del Grupo 11
 
-# Terraform Provider for Docker
+DIEGO ALONSO VILLAJULCA QUISPE
 
-[![Release](https://img.shields.io/github/v/release/kreuzwerker/terraform-provider-docker)](https://github.com/kreuzwerker/terraform-provider-docker/releases)
-[![Installs](https://img.shields.io/badge/dynamic/json?logo=terraform&label=installs&query=$.data.attributes.downloads&url=https%3A%2F%2Fregistry.terraform.io%2Fv2%2Fproviders%2F713)](https://registry.terraform.io/providers/kreuzwerker/docker)
-[![Registry](https://img.shields.io/badge/registry-doc%40latest-lightgrey?logo=terraform)](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/kreuzwerker/terraform-provider-docker/blob/main/LICENSE)  
-[![Go Status](https://github.com/kreuzwerker/terraform-provider-docker/workflows/Acc%20Tests/badge.svg)](https://github.com/kreuzwerker/terraform-provider-docker/actions)
-[![Lint Status](https://github.com/kreuzwerker/terraform-provider-docker/workflows/golangci-lint/badge.svg)](https://github.com/kreuzwerker/terraform-provider-docker/actions)
-[![Go Report Card](https://goreportcard.com/badge/github.com/kreuzwerker/terraform-provider-docker)](https://goreportcard.com/report/github.com/kreuzwerker/terraform-provider-docker)  
+MAURICIO TERRONES ALAYO
 
-## Documentation
+LUIS BENJAMIN REYES
 
-The documentation for the provider is available on the [Terraform Registry](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs).
+JHON MAXIMILIANO VILLANUEVA
 
-Do you want to migrate from `v2.x` to `v3.x`? Please read the [migration guide](docs/v2_v3_migration.md)
+OLAZABAL AVILA FERNANDO DAVID
 
-## Example usage
-
-Take a look at the examples in the [documentation](https://registry.terraform.io/providers/kreuzwerker/docker/3.6.2/docs) of the registry
-or use the following example:
+ Introducción
+Este proyecto despliega una arquitectura de microservicios contenerizada utilizando herramientas de Infraestructura como Código (IaC) y Gestión de Configuración.
 
 
-```hcl
-# Set the required provider and versions
-terraform {
-  required_providers {
-    # We recommend pinning to the specific version of the Docker Provider you're using
-    # since new versions are released frequently
-    docker = {
-      source  = "kreuzwerker/docker"
-      version = "3.6.2"
-    }
-  }
-}
 
-# Configure the docker provider
-provider "docker" {
-}
+ Arquitectura Final
+El siguiente diagrama ilustra la arquitectura final que se despliega, la cual incluye una capa de proxy para el balanceo de carga, múltiples aplicaciones de backend, servicios de persistencia y monitoreo.
 
-# Create a docker image resource
-# -> docker pull nginx:latest
-resource "docker_image" "nginx" {
-  name         = "nginx:latest"
-  keep_locally = true
-}
+![alt text](image.png)
+Parte 1: Preparación del Entorno (Instalación Única)
+Antes de desplegar el proyecto, es necesario instalar y configurar las siguientes herramientas en tu máquina con Windows.
 
-# Create a docker container resource
-# -> same as 'docker run --name nginx -p8080:80 -d nginx:latest'
-resource "docker_container" "nginx" {
-  name    = "nginx"
-  image   = docker_image.nginx.image_id
+1.1 Instalar WSL (Subsistema de Windows para Linux)
+Ansible requiere un entorno Linux. WSL nos permite ejecutar una terminal de Ubuntu directamente en Windows.
 
-  ports {
-    external = 8080
-    internal = 80
-  }
-}
+Abre PowerShell como Administrador (Menú Inicio > Escribe "PowerShell" > Clic derecho > Ejecutar como administrador).
 
-# Or create a service resource
-# -> same as 'docker service create -d -p 8081:80 --name nginx-service --replicas 2 nginx:latest'
-resource "docker_service" "nginx_service" {
-  name = "nginx-service"
-  task_spec {
-    container_spec {
-      image = docker_image.nginx.repo_digest
-    }
-  }
+Ejecuta el siguiente comando para instalar WSL y la distribución Ubuntu:
 
-  mode {
-    replicated {
-      replicas = 2
-    }
-  }
+PowerShell
 
-  endpoint_spec {
-    ports {
-      published_port = 8081
-      target_port    = 80
-    }
-  }
-}
-```
+wsl --install
 
-## Building The Provider
+Reinicia tu computadora cuando te lo pida.
 
-[Go](https://golang.org/doc/install) 1.18.x (to build the provider plugin)
+Al finalizar, abre la nueva aplicación "Ubuntu" desde el Menú Inicio. La primera vez, se tomará un momento para configurarse y luego te pedirá que crees un nombre de usuario y una contraseña para tu nuevo entorno de Linux.
+
+1.2 Instalar Docker Desktop y Configurar la Integración con WSL
+Docker es la plataforma que ejecutará nuestros contenedores.
+
+Descarga e instala Docker Desktop desde su sitio web oficial.
+
+Una vez instalado, abre Docker Desktop. Ve a Settings (Configuración) ⚙️ > Resources (Recursos) > WSL Integration.
+
+Asegúrate de que el interruptor para Ubuntu esté activado.
+
+Haz clic en el botón Apply & Restart.
 
 
-```sh
-$ git clone git@github.com:kreuzwerker/terraform-provider-docker
-$ make build
-```
+Paso 1: Descargar y Preparar Terraform 📥
+Ve a la página de descargas oficial:
+https://developer.hashicorp.com/terraform/downloads
+Descarga la versión correcta:
+Busca la sección de Windows.
+Haz clic en el botón de descarga para la versión AMD64. Se descargará un archivo .zip.
+Crea una "Casa" para Terraform:
+Ve a tu disco C: en el Explorador de Archivos.
+Crea una nueva carpeta y nómbrala Terraform. La ruta final será C:\Terraform.
+Descomprime el archivo .zip que descargaste. Dentro solo habrá un archivo: terraform.exe.
+Mueve el archivo terraform.exe a la carpeta que acabas de crear (C:\Terraform).
+ Paso 2: Añadir Terraform  ( PATH)
+Ahora le diremos a Windows dónde encontrar a Terraform.
+Abre la configuración del sistema:
+Presiona la tecla de Windows, escribe variables de entorno y selecciona la opción que dice "Editar las variables de entorno del sistema".
+Accede a las Variables de Entorno:
+En la ventana de "Propiedades del sistema" que se abre, haz clic en el botón de abajo a la derecha que dice "Variables de entorno...".
+Selecciona la Variable Path:
+En la nueva ventana, verás dos secciones. En la sección de abajo, llamada "Variables del sistema", busca y selecciona la variable llamada Path.
+Luego, haz clic en el botón "Editar...".
+Añade la Nueva Ruta:
+Se abrirá la ventana "Editar la variable de entorno".
+Haz clic en el botón "Nuevo" a la derecha. Se creará una nueva línea vacía al final de la lista.
+En esa nueva línea, escribe la ruta exacta de la carpeta que creaste en el paso anterior: C:\Terraform.
+Guarda los Cambios:
+Haz clic en "Aceptar" en todas las ventanas que abriste (la de "Editar", la de "Variables de entorno" y la de "Propiedades del sistema") para guardar y cerrar todo.
 
-## Contributing
+ Paso 3: ¡Verifica que Funciona! 
+Para confirmar que Windows ya sabe dónde está Terraform:
 
-The Terraform Docker Provider is the work of many of contributors. We appreciate your help!
+Abre una NUEVA terminal de PowerShell o Símbolo del sistema. (Es importante que sea nueva para que cargue la agenda actualizada).
 
-To contribute, please read the contribution guidelines: [Contributing to Terraform - Docker Provider](CONTRIBUTING.md)
+Escribe el siguiente comando y presiona Enter:
 
-## License
+Bash
+terraform --version
+Si todo salió bien, verás un mensaje que te muestra la versión de Terraform que instalaste.
 
-The Terraform Provider Docker is available to everyone under the terms of the Mozilla Public License Version 2.0. [Take a look the LICENSE file](LICENSE).
+Visual Studio Code: Descárgalo desde su sitio web oficial.
+
+1.4 Instalar la Extensión de VS Code
+Abre VS Code, ve al panel de Extensiones (Ctrl+Shift+X) y busca e instala la extensión oficial de Microsoft: Remote - WSL.
+
+1.5 Instalar Ansible (Dentro de WSL)
+Finalmente, instala Ansible dentro de tu entorno de Linux.
+
+Abre tu terminal de Ubuntu/WSL.
+
+Ejecuta los siguientes comandos:
+
+Bash
+sudo apt-get update
+sudo apt-get install ansible -y
+¡Felicidades, tu entorno de desarrollo está completamente configurado!
+
+🚀 Parte 2: Despliegue del Proyecto
+Sigue estos pasos para clonar el repositorio y levantar toda la infraestructura.
+
+2.1 Descargar el Proyecto
+Primero tienes que crear una carpeta ahi es donde vas a clorar el repositorio.
+luego abre tuerminal de Ubuntu/WSL y ejecuta el siguiente comando para poder ingresar a tu carpeta que creaste y hacer que se abra en el visual estudio code. 
+navega con "cd carpetas" carpetas (sera el nombre de tu carpera que creaste) y una ves que estes dentro de tu carpeta escribe este comando.
+
+code . 
+Despues dentro del visual estudio code , abre tu terminar 
+puedes usar control + ñ o en el menu de arriba buscar el terminal 
+leugo dentro del terminal vas a poner el siguiente comando
+Bash
+
+git clone -b feature/base-proyecto https://github.com/MauricioF68/terraform_2025.git
+2.2 Abrir el Proyecto en VS Code (Modo WSL)
+Navega a la carpeta del proyecto recién clonado:
+
+Bash
+
+cd terraform_2025
 
 
-## Stargazers over time
+2.3 Construir la Infraestructura con Terraform
+En la terminal integrada de VS Code, navega a la carpeta de Terraform:
 
-[![Stargazers over time](https://starchart.cc/kreuzwerker/terraform-provider-docker.svg)](https://starchart.cc/kreuzwerker/terraform-provider-docker)
+Bash
+
+cd terraform
+Inicializa Terraform para descargar los proveedores necesarios:
+
+Bash
+
+terraform init
+Aplica la configuración para crear todos los contenedores y redes. Te pedirá una contraseña para la base de datos ( usar admin123 )
+
+Bash
+
+terraform apply
+Escribe yes cuando te pida confirmación para continuar.
+
+2.4 Configurar los Servicios con Ansible
+En la misma terminal, navega a la carpeta de Ansible:
+
+Bash
+
+cd ../ansible
+Ejecuta el playbook de Ansible para copiar las configuraciones y reiniciar el proxy:
+
+Bash
+
+ansible-playbook -i inventory.ini playbook.yaml
+Al finalizar, toda la arquitectura estará desplegada y configurada.
+
+✅ Parte 3: Verificación y Pruebas
+3.1 Comprobar los Contenedores
+Ejecuta docker ps en tu terminal para ver todos los contenedores del proyecto en estado Up.
+
+3.2 Probar el Proxy y el Balanceo de Carga
+Probar el Frontend: Abre tu navegador web y visita http://localhost:50010/web/. Deberías ver la página estática del proyecto.
+
+Probar el Backend: Ahora, visita http://localhost:50010/api/. Deberías ver la página de bienvenida Aplicacion 1 , sigue ejecutando y veras que cambian Aplicacion 1 , Aplicacion 2 Aplicacion 3
+
+Visualizar el Balanceo de Carga: Para ver el proxy en acción, puedes personalizar el mensaje de cada app y ver cómo cambia en el navegador al refrescar la página.
+
+Entra al primer contenedor de app:
+
+Bash
+
+docker exec -it nginx-app1dev nano /usr/share/nginx/html/index.html
+Cambia <h1>Welcome to nginx!</h1> por <h1>Respuesta desde APP 01</h1> y guarda (Ctrl+X, Y, Enter).
+
+Repite el proceso para nginx-app2dev y nginx-app3dev, cambiando el mensaje a "APP 02" y "APP 03".
+
+Ahora, refresca la página http://localhost:50010/api/ varias veces. Verás cómo el mensaje cambia, demostrando que el proxy está distribuyendo el tráfico entre los diferentes contenedores.
+
+🧹 Limpieza (Destruir la Infraestructura)
+Para eliminar todos los recursos creados por este proyecto, navega a la carpeta terraform y ejecuta:
+
+Bash
+
+terraform destroy -auto-approve
+Advertencia: Esta acción es irreversible y eliminará todos los contenedores y redes gestionados.
+
+NO OLVIDES TENER ACTIVADO EL DOCKER EN TU ESCRITORIO . 
+PARA ACTIVARLO , BUSCALO EN TU BARRA DE WINDOWS Y ESCRIBE DOCKER Y DALE CLICK , AL ENTRAR DOCKER SE EMPEZARA ACTIVAR ! 
